@@ -1,0 +1,3 @@
+/home/michael/Github/KWS-STM32/KWS_STM32 _old/build/CMakeFiles/KWS_STM32_old.dir
+/home/michael/Github/KWS-STM32/KWS_STM32 _old/build/CMakeFiles/edit_cache.dir
+/home/michael/Github/KWS-STM32/KWS_STM32 _old/build/CMakeFiles/rebuild_cache.dir
