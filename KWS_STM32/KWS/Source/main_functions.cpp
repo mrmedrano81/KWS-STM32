@@ -12,20 +12,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+
 #include "main_functions.h"
 #include "audio_provider.h"
 #include "feature_provider.h"
 #include "recognize_commands.h"
 #include "command_responder.h"
 
-#include "ds_cnn_quantized_data.h"
-//#include "micro_features_model.h"
+//#include "ds_cnn_quantized_data.h"
+#include "micro_features_model.h"
 
-#include "model_settings.h"
-//#include "micro_features_micro_model_settings.h"
+//#include "model_settings.h"
+#include "micro_features_micro_model_settings.h"
 
-#include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
+//#include "tensorflow/lite/micro/all_ops_resolver.h"
 #include "tensorflow/lite/micro/micro_error_reporter.h"
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/schema/schema_generated.h"
@@ -56,8 +57,9 @@ void setup() {
   static tflite::MicroErrorReporter micro_error_reporter;
   error_reporter = &micro_error_reporter;
 
-  model = tflite::GetModel(g_ds_cnn_quantized_data);
-  //model = tflite::GetModel(g_model);
+  //model = tflite::GetModel(g_ds_cnn_quantized_data);
+  model = tflite::GetModel(g_model);
+
   if (model->version() != TFLITE_SCHEMA_VERSION) {
     TF_LITE_REPORT_ERROR(error_reporter,
                          "Model provided is schema version %d not equal "
@@ -66,18 +68,58 @@ void setup() {
     return;
   }
 
-  //ops resolver
-  tflite::AllOpsResolver resolver;
+  //ALL OPS RESOLVER
+  //tflite::AllOpsResolver resolver;
+
+  // DS CNN 
+  // MICRO MUTABLE OP RESOLVER
+  /*
+  static tflite::MicroMutableOpResolver<6> micro_op_resolver(error_reporter);
+  if (micro_op_resolver.AddAveragePool2D() != kTfLiteOk) {
+    return;
+  }
+  if (micro_op_resolver.AddConv2D() != kTfLiteOk) {
+    return;
+  }
+  if (micro_op_resolver.AddDepthwiseConv2D() != kTfLiteOk) {
+    return;
+  }
+  if (micro_op_resolver.AddFullyConnected() != kTfLiteOk) {
+    return;
+  }
+  if (micro_op_resolver.AddReshape() != kTfLiteOk) {
+    return;
+  }
+  if (micro_op_resolver.AddSoftmax() != kTfLiteOk) {
+    return;
+  }
+  */
+  // MICROSPEECH EXAMPLE 
+  // MICRO MUTABLE OP RESOLVER
+  
+    static tflite::MicroMutableOpResolver<4> micro_op_resolver(error_reporter);
+  if (micro_op_resolver.AddDepthwiseConv2D() != kTfLiteOk) {
+    return;
+  }
+  if (micro_op_resolver.AddFullyConnected() != kTfLiteOk) {
+    return;
+  }
+  if (micro_op_resolver.AddSoftmax() != kTfLiteOk) {
+    return;
+  }
+  if (micro_op_resolver.AddReshape() != kTfLiteOk) {
+    return;
+  }
+  
 
   // Build an interpreter to run the model with.
-  static tflite::MicroInterpreter static_interpreter(model, resolver, tensor_arena, kTensorArenaSize, error_reporter);
+  static tflite::MicroInterpreter static_interpreter(model, micro_op_resolver, tensor_arena, kTensorArenaSize, error_reporter);
   interpreter = &static_interpreter;
 
   // Allocate memory from the tensor_arena for the model's tensors.
   TfLiteStatus allocate_status = interpreter->AllocateTensors();
   if (allocate_status != kTfLiteOk) {
     TF_LITE_REPORT_ERROR(error_reporter, "AllocateTensors() failed");
-    //Display_Application_Description();
     return;
   }
 
@@ -138,7 +180,8 @@ void loop() {
   
   // Obtain a pointer to the output tensor
 
-
+  TfLiteTensor* output = interpreter->output(0);
+  
   // Run the model on the spectrogram input and make sure it succeeds.
   TfLiteStatus invoke_status = interpreter->Invoke();
   if (invoke_status != kTfLiteOk) {
@@ -146,11 +189,13 @@ void loop() {
     return;
   }
 
-  TfLiteTensor* output = interpreter->output(0);
-  TF_LITE_REPORT_ERROR(error_reporter, "0: %d, 1: %d 2: %d, 3: %d, 4: %d, 5: %d, 6: %d, 7: %d, 8: %d, 9: %d, 10: %d, 11: %d, 12: %d, dims: %d", 
-                       output->data.int8[0], output->data.int8[1], output->data.int8[2], output->data.int8[3], output->data.int8[4]
-                       , output->data.int8[5], output->data.int8[6], output->data.int8[7], output->data.int8[8], output->data.int8[9]
-                       , output->data.int8[10], output->data.int8[11], output->data.int8[12], output->dims->data[1]);
+  TF_LITE_REPORT_ERROR(error_reporter, "Silence-0: %d, Unkown-1: %d yes-2: %d, no-3: %d, up-4: %d, down-5: %d",
+                       output->data.int8[0], output->data.int8[1], output->data.int8[2], 
+                       output->data.int8[3], output->data.int8[4], output->data.int8[5]);
+  TF_LITE_REPORT_ERROR(error_reporter, "left-6: %d, right-7: %d, on-8: %d, off-9: %d, stop-10: %d, go-11: %d", 
+                       output->data.int8[6], output->data.int8[7], output->data.int8[8], 
+                       output->data.int8[9], output->data.int8[10], output->data.int8[11]);
+  TF_LITE_REPORT_ERROR(error_reporter,"dims: %d", output->dims->data[1]);
 
   // Determine whether a command was recognized based on the output of inference
   const char* found_command = nullptr;

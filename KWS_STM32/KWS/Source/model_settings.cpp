@@ -16,16 +16,16 @@ limitations under the License.
 #include "model_settings.h"
 
 const char* kCategoryLabels[kCategoryCount] = {
-		"Down",
-		"Go",
-		"Left",
-		"No",
-		"Off",
-		"On",
-		"Right",
-		"Stop",
-		"Up",
-		"Yes",
-		"Silence",
-		"Unknown"
+	"Down", 
+	"Go", 
+	"Left", 
+	"No", 
+	"Off", 
+	"On", 
+	"Right",
+	"Stop", 
+	"Up", 
+	"Yes", 
+	"Silence", 
+	"Unknown"
 };
